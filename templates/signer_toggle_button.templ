@@ -1,0 +1,28 @@
+package templates
+
+import "encoding/json"
+
+// SignerToggleButton renders the activator toggle button for a signer account
+templ SignerToggleButton(accountID string, active bool) {
+	{{objectValues := map[string]bool{
+	"active": !active,
+}
+jsonBytes, _ := json.Marshal(objectValues)
+	}}
+	<div id="signerToggleButton">
+		<button
+			type="button"
+			class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
+			hx-post={ "/accounts/" + accountID + "/toggle-active" }
+			hx-vals={ string(jsonBytes) }
+			hx-target="#signerToggleButton"
+			hx-swap="outerHTML"
+		>
+			if active {
+				Turn off
+			} else {
+				Activate
+			}
+		</button>
+	</div>
+}

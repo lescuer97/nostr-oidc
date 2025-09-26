@@ -1,0 +1,12 @@
+package templates
+
+type NotifInfo struct {
+	Msg string
+	Type string
+}
+
+templ Notification(notifInfo NotifInfo) {
+	<div id="snackbar" remove-me="3s" class={notifInfo.Type}>
+		<span>{ notifInfo.Msg }</span>
+	</div>
+}

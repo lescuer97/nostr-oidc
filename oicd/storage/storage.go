@@ -2,15 +2,23 @@ package storage
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
+	"log"
+
+	// "crypto/rsa"
 	"errors"
 	"fmt"
-	"math/big"
+
+	// "log"
+
+	// "math/big"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/google/uuid"
 
@@ -20,13 +28,13 @@ import (
 
 // serviceKey1 is a public key which will be used for the JWT Profile Authorization Grant
 // the corresponding private key is in the service-key1.pem (for demonstration purposes)
-var serviceKey1 = &rsa.PublicKey{
-	N: func() *big.Int {
-		n, _ := new(big.Int).SetString("00f6d44fb5f34ac2033a75e73cb65ff24e6181edc58845e75a560ac21378284977bb055b1a75b714874e2a2641806205681c09abec76efd52cf40984edcf4c8ca09717355d11ac338f280d3e4c905b00543bdb8ee5a417496cb50cb0e29afc5a0d0471fd5a2fa625bd5281f61e6b02067d4fe7a5349eeae6d6a4300bcd86eef331", 16)
-		return n
-	}(),
-	E: 65537,
-}
+// var serviceKey1 = &ecdsa.PublicKey{
+// 	N: func() *big.Int {
+// 		n, _ := new(big.Int).SetString("00f6d44fb5f34ac2033a75e73cb65ff24e6181edc58845e75a560ac21378284977bb055b1a75b714874e2a2641806205681c09abec76efd52cf40984edcf4c8ca09717355d11ac338f280d3e4c905b00543bdb8ee5a417496cb50cb0e29afc5a0d0471fd5a2fa625bd5281f61e6b02067d4fe7a5349eeae6d6a4300bcd86eef331", 16)
+// 		return n
+// 	}(),
+// 	E: 65537,
+// }
 
 var (
 	_ op.Storage                  = &Storage{}
@@ -54,7 +62,7 @@ type Storage struct {
 type signingKey struct {
 	id        string
 	algorithm jose.SignatureAlgorithm
-	key       *rsa.PrivateKey
+	key       *ecdsa.PrivateKey
 }
 
 func (s *signingKey) SignatureAlgorithm() jose.SignatureAlgorithm {
@@ -86,7 +94,7 @@ func (s *publicKey) Use() string {
 }
 
 func (s *publicKey) Key() any {
-	return &s.key.PublicKey
+	return s.key.Public()
 }
 
 func NewStorage(userStore UserStore) *Storage {
@@ -94,7 +102,7 @@ func NewStorage(userStore UserStore) *Storage {
 }
 
 func NewStorageWithClients(userStore UserStore, clients map[string]*Client) *Storage {
-	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	 privateKey, _ := ecdsa.GenerateKey( elliptic.P256(), rand.Reader)
 	return &Storage{
 		authRequests:  make(map[string]*AuthRequest),
 		codes:         make(map[string]string),
@@ -104,15 +112,15 @@ func NewStorageWithClients(userStore UserStore, clients map[string]*Client) *Sto
 		userStore:     userStore,
 		services: map[string]Service{
 			userStore.ExampleClientID(): {
-				keys: map[string]*rsa.PublicKey{
-					ServiceUserKeyID: serviceKey1,
-				},
+				// keys: map[string]*ecdsa.PublicKey{
+				// 	ServiceUserKeyID: serviceKey1,
+				// },
 			},
 		},
 		signingKey: signingKey{
 			id:        uuid.NewString(),
-			algorithm: jose.RS256,
-			key:       key,
+			algorithm: jose.ES256,
+			key:       privateKey,
 		},
 		deviceCodes: make(map[string]deviceAuthorizationEntry),
 		userCodes:   make(map[string]string),
@@ -130,7 +138,7 @@ func NewStorageWithClients(userStore UserStore, clients map[string]*Client) *Sto
 }
 
 // CheckUsernamePassword implements the `authenticate` interface of the login
-func (s *Storage) CheckUsernamePassword(username, password, id string) error {
+func (s *Storage) CheckUserNpub( id string, publicKey *btcec.PublicKey) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	request, ok := s.authRequests[id]
@@ -141,8 +149,8 @@ func (s *Storage) CheckUsernamePassword(username, password, id string) error {
 	// for demonstration purposes we'll check we'll have a simple user store and
 	// a plain text password.  For real world scenarios, be sure to have the password
 	// hashed and salted (e.g. using bcrypt)
-	user := s.userStore.GetUserByUsername(username)
-	if user != nil && user.Password == password {
+	user := s.userStore.GetUserByNpub(publicKey)
+	if user != nil {
 		// be sure to set user id into the auth request after the user was checked,
 		// so that you'll be able to get more information about the user after the login
 		request.UserID = user.ID
@@ -159,16 +167,16 @@ func (s *Storage) CheckUsernamePassword(username, password, id string) error {
 	return fmt.Errorf("username or password wrong")
 }
 
-func (s *Storage) CheckUsernamePasswordSimple(username, password string) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	user := s.userStore.GetUserByUsername(username)
-	if user != nil && user.Password == password {
-		return nil
-	}
-	return fmt.Errorf("username or password wrong")
-}
+// func (s *Storage) CheckUsernamePasswordSimple(username, password string) error {
+// 	s.lock.Lock()
+// 	defer s.lock.Unlock()
+//
+// 	user := s.userStore.GetUserByUsername(username)
+// 	if user != nil && user.Password == password {
+// 		return nil
+// 	}
+// 	return fmt.Errorf("username or password wrong")
+// }
 
 // CreateAuthRequest implements the op.Storage interface
 // it will be called after parsing and validation of the authentication request
@@ -176,6 +184,7 @@ func (s *Storage) CreateAuthRequest(ctx context.Context, authReq *oidc.AuthReque
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	log.Printf("\n authReq %+v", *authReq)
 	if len(authReq.Prompt) == 1 && authReq.Prompt[0] == "none" {
 		// With prompt=none, there is no way for the user to log in
 		// so return error right away.
@@ -428,6 +437,7 @@ func (s *Storage) KeySet(ctx context.Context) ([]op.Key, error) {
 func (s *Storage) GetClientByClientID(ctx context.Context, clientID string) (op.Client, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	log.Printf("\n client %+v", clientID)
 	client, ok := s.clients[clientID]
 	if !ok {
 		return nil, fmt.Errorf("client not found")
@@ -665,18 +675,18 @@ func (s *Storage) setUserinfo(ctx context.Context, userInfo *oidc.UserInfo, user
 		switch scope {
 		case oidc.ScopeOpenID:
 			userInfo.Subject = user.ID
-		case oidc.ScopeEmail:
-			userInfo.Email = user.Email
-			userInfo.EmailVerified = oidc.Bool(user.EmailVerified)
-		case oidc.ScopeProfile:
-			userInfo.PreferredUsername = user.Username
-			userInfo.Name = user.FirstName + " " + user.LastName
-			userInfo.FamilyName = user.LastName
-			userInfo.GivenName = user.FirstName
-			userInfo.Locale = oidc.NewLocale(user.PreferredLanguage)
-		case oidc.ScopePhone:
-			userInfo.PhoneNumber = user.Phone
-			userInfo.PhoneNumberVerified = user.PhoneVerified
+		// case oidc.ScopeEmail:
+		// 	userInfo.Email = user.Email
+		// 	userInfo.EmailVerified = oidc.Bool(user.EmailVerified)
+		// case oidc.ScopeProfile:
+		// 	userInfo.PreferredUsername = user.Username
+		// 	userInfo.Name = user.FirstName + " " + user.LastName
+		// 	userInfo.FamilyName = user.LastName
+		// 	userInfo.GivenName = user.FirstName
+		// 	userInfo.Locale = oidc.NewLocale(user.PreferredLanguage)
+		// case oidc.ScopePhone:
+		// 	userInfo.PhoneNumber = user.Phone
+		// 	userInfo.PhoneNumberVerified = user.PhoneVerified
 		case CustomScope:
 			// you can also have a custom scope and assert public or custom claims based on that
 			userInfo.AppendClaims(CustomClaim, customClaim(clientID))

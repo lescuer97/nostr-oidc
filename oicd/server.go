@@ -2,6 +2,8 @@ package oicd
 
 import (
 	"crypto/sha256"
+	"embed"
+	"io/fs"
 	"log"
 	"log/slog"
 	"net/http"
@@ -24,14 +26,25 @@ type Storage interface {
 	// deviceAuthenticate
 }
 
+//go:embed static/*
+var static embed.FS
+
 // simple counter for request IDs
 var counter atomic.Int64
 
 // Use one of the pre-made clients in storage/clients.go or register a new one.
-func SetupServer( storage Storage, logger *slog.Logger,  extraOptions ...op.Option) chi.Router {
+func SetupServer(storage Storage, logger *slog.Logger, extraOptions ...op.Option) chi.Router {
 	// the OpenID Provider requires a 32-byte key for (token) encryption
 	// be sure to create a proper crypto random key and manage it securely!
 	key := sha256.Sum256([]byte("test"))
+
+	contentStatic, err := fs.Sub(static, "static")
+	if err != nil {
+		panic(err)
+	}
+
+	httpFs := http.FS(contentStatic)
+	fileServer := http.FileServer(httpFs)
 
 	router := chi.NewRouter()
 	router.Use(logging.Middleware(
@@ -40,6 +53,7 @@ func SetupServer( storage Storage, logger *slog.Logger,  extraOptions ...op.Opti
 			return slog.Int64("id", counter.Add(1))
 		}),
 	))
+	router.Handle("/static/*", http.StripPrefix("/static/", fileServer))
 
 	// for simplicity, we provide a very small default page for users who have signed out
 	router.HandleFunc(pathLoggedOut, func(w http.ResponseWriter, req *http.Request) {

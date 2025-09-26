@@ -1,0 +1,74 @@
+package templates
+
+templ CreateUserDialog() {
+	<dialog
+		open
+		id="formDialog"
+		class="fixed inset-0 m-auto p-0 bg-transparent border-none max-w-md w-full max-h-[90vh] rounded-xl shadow-2xl backdrop:bg-black backdrop:opacity-50"
+	>
+		<form
+			hx-post="/admin/add_npub"
+			hx-trigger="submit"
+			hx-target="#formDialog"
+			hx-swap="delete"
+			method="dialog"
+		>
+			<div class="bg-white rounded-xl p-8">
+				<div class="mb-6">
+					<h2 class="text-2xl font-semibold text-gray-800 text-center">Add New Account</h2>
+					<p class="text-sm text-gray-500 text-center mt-2">Create a new Nostr account with the specified number of allowed keys</p>
+				</div>
+				<div class="space-y-6">
+					<div>
+						<label for="npub" class="block text-sm font-medium text-gray-700 mb-2">
+							Nostr Public Key (NPUB)
+						</label>
+						<input
+							type="text"
+							id="npub"
+							name="npub"
+							required
+							placeholder="npub1..."
+							class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50 focus:bg-white"
+						/>
+						<p class="text-xs text-gray-500 mt-1">Enter a valid Nostr public key</p>
+					</div>
+					<div>
+						<label for="allowed_keys" class="block text-sm font-medium text-gray-700 mb-2">
+							Maximum Allowed Keys
+						</label>
+						<input
+							type="number"
+							id="allowed_keys"
+							name="allowed_keys"
+							value="100"
+							min="1"
+							max="1000"
+							required
+							class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-gray-50 focus:bg-white"
+						/>
+						<p class="text-xs text-gray-500 mt-1">Number of keys this account can generate (1-1000)</p>
+					</div>
+				</div>
+				<div class="flex items-center justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+					<button
+						type="button"
+						onclick="document.querySelector('#formDialog').close();"
+						class="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+					>
+						Cancel
+					</button>
+					<button
+						type="submit"
+						class="inline-flex items-center justify-center px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm"
+					>
+						<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+						</svg>
+						Create Account
+					</button>
+				</div>
+			</div>
+		</form>
+	</dialog>
+}

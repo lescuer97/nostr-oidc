@@ -1,0 +1,20 @@
+package templates
+
+templ Layout(title string) {
+	<html>
+		<head>
+			<title>{ title }</title>
+			<script src="/static/app.js" type="module" defer></script>
+			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous"></script>
+			<script src="https://cdn.jsdelivr.net/npm/htmx-ext-preload@2.1.0" integrity="sha384-fkzubQiTB69M7XTToqW6tplvxAOJkqPl5JmLAbumV2EacmuJb8xEP9KnJafk/rg8" crossorigin="anonymous"></script>
+			<script src="https://unpkg.com/htmx-ext-remove-me@2.0.0/remove-me.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+			<link rel="stylesheet" href="/static/app.css"/>
+		</head>
+		<body hx-ext="preload">
+			<div hx-ext="remove-me" id="notifications"></div>
+			{ children... }
+			<div id="modals"></div>
+		</body>
+	</html>
+}

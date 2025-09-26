@@ -1,0 +1,43 @@
+/* snackbar css */
+    #snackbar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #323232;
+      color: #fff;
+      padding: 16px 24px;
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      font-size: 14px;
+      min-width: 200px;
+      max-width: 300px;
+      opacity: 0; /* start hidden */
+      transform: translateX(120%);
+      animation: slideInOut 3s ease-in-out forwards;
+    }
+
+    #snackbar.error {
+        background-color: #ff6666;
+    }
+
+    #snackbar.success {
+        background-color: #90ef6e;
+    }
+    @keyframes slideInOut {
+      0% {
+        transform: translateX(120%);
+        opacity: 0;
+      }
+      10% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      90% {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translateX(120%);
+        opacity: 0;
+      }
+    }

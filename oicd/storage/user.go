@@ -1,11 +1,17 @@
 package storage
 
 import (
-	"crypto/rsa"
+	"crypto/ecdsa"
+	// "crypto/rsa"
+	"encoding/hex"
 	"encoding/json"
 	"os"
-	"strings"
 
+	// "strings"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/nbd-wtf/go-nostr/nip19"
 	"golang.org/x/text/language"
 )
 
@@ -18,25 +24,18 @@ const (
 
 type User struct {
 	ID                string
-	Username          string
-	Password          string
-	FirstName         string
-	LastName          string
-	Email             string
-	EmailVerified     bool
-	Phone             string
-	PhoneVerified     bool
+	Npub              *btcec.PublicKey
 	PreferredLanguage language.Tag
 	IsAdmin           bool
 }
 
 type Service struct {
-	keys map[string]*rsa.PublicKey
+	keys map[string]*ecdsa.PublicKey
 }
 
 type UserStore interface {
 	GetUserByID(string) *User
-	GetUserByUsername(string) *User
+	GetUserByNpub(*btcec.PublicKey) *User
 	ExampleClientID() string
 }
 
@@ -57,34 +56,27 @@ func StoreFromFile(path string) (UserStore, error) {
 }
 
 func NewUserStore(issuer string) UserStore {
-	hostname := strings.Split(strings.Split(issuer, "://")[1], ":")[0]
+	_, value, err := nip19.Decode("npub1z5caxxaucn8zvj6ejcgshsmq6e0qeg3e8ckf2k843w53wcarkprqa6ssqg")
+	if err != nil {
+		panic("invalid  ADMIN_NOSTR_NPUB ")
+	}
+
+	decodedKey, err := hex.DecodeString(value.(string))
+	if err != nil {
+		panic("decoded ADMIN_NOSTR_NPUB is not correct")
+	}
+
+	pubkey, err := schnorr.ParsePubKey(decodedKey)
+	if err != nil {
+		panic("could not decode schnorr pubkey")
+	}
 	return userStore{
 		users: map[string]*User{
 			"id1": {
 				ID:                "id1",
-				Username:          "test-user@" + hostname,
-				Password:          "verysecure",
-				FirstName:         "Test",
-				LastName:          "User",
-				Email:             "test-user@zitadel.ch",
-				EmailVerified:     true,
-				Phone:             "",
-				PhoneVerified:     false,
 				PreferredLanguage: language.German,
+				Npub:              pubkey,
 				IsAdmin:           true,
-			},
-			"id2": {
-				ID:                "id2",
-				Username:          "test-user2",
-				Password:          "verysecure",
-				FirstName:         "Test",
-				LastName:          "User2",
-				Email:             "test-user2@zitadel.ch",
-				EmailVerified:     true,
-				Phone:             "",
-				PhoneVerified:     false,
-				PreferredLanguage: language.German,
-				IsAdmin:           false,
 			},
 		},
 	}
@@ -99,9 +91,9 @@ func (u userStore) GetUserByID(id string) *User {
 	return u.users[id]
 }
 
-func (u userStore) GetUserByUsername(username string) *User {
+func (u userStore) GetUserByNpub(pubkey *btcec.PublicKey) *User {
 	for _, user := range u.users {
-		if user.Username == username {
+		if user.Npub.IsEqual(pubkey) {
 			return user
 		}
 	}
