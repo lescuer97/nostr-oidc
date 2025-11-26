@@ -1,10 +1,9 @@
-/*
-Source - https://stackoverflow.com/a
-Posted by Wongjn
-Retrieved 2025-11-11, License - CC BY-SA 4.0
-*/
+@import "tailwindcss";
 
-@import "tailwindcss" source("../../../");
+@source "../templates/**/*.templ";
+@source "../templates/**/*_templ.go";
+@source "./modules/**/*.js";
+@source "./*.js";
 
 /* snackbar css */
 #snackbar {
