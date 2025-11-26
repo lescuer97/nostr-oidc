@@ -49,9 +49,6 @@ temp/
 coverage.out
 coverage.html
 
-# Go modules
-go.sum
-
 # OS generated files
 Thumbs.db
 ehthumbs.db
