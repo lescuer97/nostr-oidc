@@ -296,7 +296,6 @@ func (s *Storage) accessToken(tx *sql.Tx, applicationID, refreshTokenID, subject
 		Scopes:         scopes,
 	}
 
-	fmt.Printf("\n token: \n %+v", token)
 	err := s.db.AddToken(tx, &token)
 	if err != nil {
 		return nil, fmt.Errorf("s.db.AddRefreshToken(tx, &token). %w", err)
@@ -619,6 +618,7 @@ func (s *Storage) GetClientByClientID(ctx context.Context, clientID string) (op.
 	if err != nil {
 		return nil, fmt.Errorf("s.db.SearchClientByID(tx, %s). %w", clientID, err)
 	}
+
 
 	err = tx.Commit()
 	if err != nil {

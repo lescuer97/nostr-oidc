@@ -5,28 +5,55 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zalando/go-keyring"
+	goLibSecret "github.com/lescuer97/go-libsecret"
 )
 
 const Service = "nostr-oidc"
 
 const VertexNsec = "vertex-nsec"
+const SchemaName = "org.example.NostrOidc"
 
 var (
-	ErrNotFound = errors.New("Could not found value in keystore")
+	ErrNotFound    = errors.New("Could not found value in keystore")
+	SchemaNotSetup = errors.New("Main schema was not setup you need that first")
 )
 
+var mainSchema *goLibSecret.Schema
+
+func SetupKeychain() error {
+	attr := map[string]goLibSecret.SchemaAttributeType{
+		"key": goLibSecret.SchemaAttributeString,
+	}
+
+	schema, err := goLibSecret.NewSchema(SchemaName, goLibSecret.SchemaFlagsNone, attr)
+	if err != nil {
+		return fmt.Errorf("goLibSecret.NewSchema(SchemaName). %w", err)
+
+	}
+
+	mainSchema = schema
+	return nil
+}
+
 func SetSecret(id string, secret []byte) error {
-	return keyring.Set(Service, id, hex.EncodeToString(secret))
+	if mainSchema == nil {
+		return SchemaNotSetup
+	}
+
+	attr := map[string]string{
+		"key": id,
+	}
+
+	return goLibSecret.StorePassword(mainSchema, attr, goLibSecret.CollectionDefault, SchemaName, hex.EncodeToString(secret))
 }
 
 func GetSecret(id string) (string, error) {
-	val, err := keyring.Get(Service, id)
+	attrs := goLibSecret.NewAttributes()
+	attrs.Set("key", id)
+
+	val, err := goLibSecret.PasswordLookupSync(mainSchema, attrs)
 	if err != nil {
-		if errors.Is(err, keyring.ErrNotFound) {
-			return "", errors.Join(fmt.Errorf("keyring.Get(Service, id). %w", err), ErrNotFound)
-		}
-		return "", fmt.Errorf("keyring.Get(Service, id). %w", err)
+		return "", fmt.Errorf("goLibSecret.PasswordLookupSync(mainSchema, attrs). %w", err)
 	}
 	if val == "" {
 		return "", ErrNotFound
