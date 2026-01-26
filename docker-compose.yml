@@ -1,0 +1,24 @@
+services:
+  nostr-oidc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nostr-oidc
+    ports:
+      - "8082:8082"
+    environment:
+      # REQUIRED: Copy .env.example to .env and set your admin npub
+      # This is needed for initial setup to create the first admin user
+      - ADMIN_USER_NPUB=<your-npub>
+    volumes:
+      # Persist database (database.db will be created in /app/data)
+      - ./data:/app/data
+    cap_add:
+      - IPC_LOCK
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

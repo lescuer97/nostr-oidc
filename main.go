@@ -15,6 +15,7 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	"github.com/lescuer97/nostr-oicd/libsecret"
 	"github.com/lescuer97/nostr-oicd/storage"
 	"github.com/lescuer97/nostr-oicd/storage/database"
@@ -30,8 +31,11 @@ import (
 const ADMIN_USER_NPUB = "ADMIN_USER_NPUB"
 
 func main() {
-	// Load config from environment
-	// cfg := config.LoadFromEnv()
+	// Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found or error loading it, using environment variables")
+  }
+  
 	err := libsecret.SetupKeychain()
 	if err != nil {
 		log.Fatalf("libsecret.SetupKeychain() %v", err)

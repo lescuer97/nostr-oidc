@@ -18,10 +18,33 @@ queried later.
 
 ## How to run
 
-The first time you run the program you will need to run it with the `ADMIN_USER_NPUB` enviroment variable. The system
-will create and administrative user to be able to login to the user dashboard.
+### Docker Compose (Recommended)
 
-You will be able to login to it in the `/admin/login` endpoint. After success it will redirect to the dashboard.
+1. Set your admin npub in `docker-compose.yml`:
+   ```yaml
+   environment:
+     - ADMIN_USER_NPUB=your_npub_here
+   ```
+
+2. Run:
+   ```bash
+   docker compose up -d
+   ```
+
+3. Access the dashboard at `http://localhost:8082/admin/login`
+
+### Local Development
+
+1. Copy `.env.example` to `.env` and set your `ADMIN_USER_NPUB`
+
+2. Build and run:
+   ```bash
+   ./build-local.sh
+   ./run-local.sh
+   ```
+
+3. Access the dashboard at `http://localhost:8082/admin/login`
+
 
 ## Todos
 
