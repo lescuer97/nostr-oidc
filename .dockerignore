@@ -1,0 +1,55 @@
+# Git files
+.git
+.gitignore
+
+# Development files
+.air.toml
+.goosehints
+.goose/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Database files (will be in volume)
+*.db
+*.db-shm
+*.db-wal
+database.db
+
+# Documentation
+*.md
+!README.md
+
+# Node modules (if any)
+node_modules/
+web/static/node_modules/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Data directory
+data/

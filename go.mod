@@ -3,7 +3,6 @@ module github.com/lescuer97/nostr-oicd
 go 1.25.4
 
 require (
-	github.com/a-h/templ v0.3.943
 	github.com/btcsuite/btcd/btcec/v2 v2.3.5
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-jose/go-jose/v4 v4.0.5
@@ -11,6 +10,7 @@ require (
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/securecookie v1.1.2
+	github.com/joho/godotenv v1.5.1
 	github.com/lescuer97/go-libsecret v0.0.0-20251130141455-a4785c0f3a14
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/nbd-wtf/go-nostr v0.52.2
